@@ -1,0 +1,109 @@
+import time
+import torch
+from tools import IouCal, predict_sliding
+from parameter import args
+from tqdm.auto import tqdm
+
+
+def train_model(my_model, dataloaders, criterion, optimizer, save_name, num_epochs=30, use_lstm=False, device=args.gpu):
+    start_time = time.time()
+
+    train_miou_history = []
+    val_miou_history = []
+    best_iou = 0
+
+    for epoch in range(num_epochs):
+        print("Epoch {}/{}".format(epoch, num_epochs-1))
+        print("-" * 10)
+        # for every epoch there is train and val phase respectively
+        for phase in ["train", "val"]:
+            iou = IouCal()
+            if phase == "train":
+                print("start_training round" + str(epoch))
+                print(optimizer.param_groups[0]["lr"])
+                my_model.train()  # set model to train
+            else:
+                print("start_val round" + str(epoch))
+                my_model.eval()   # set model to evaluation
+
+            running_loss = 0.0
+            for i_batch, sample_batch in enumerate(tqdm(dataloaders[phase])):
+                if len(list(sample_batch["image"])) < args.batch_size//args.sequence_len:
+                    continue
+                if use_lstm:
+                    inputs = torch.cat(list(sample_batch["image"]), dim=0).to(device, dtype=torch.float32)
+                    labels = list(sample_batch["label"])
+                    # spilt final frame label for each sequence
+                    label_for_pred = []
+                    for i in range(len(labels)):
+                        label_for_pred.append(labels[i][-1:])
+                    labels = torch.cat(label_for_pred, dim=0).to(device, dtype=torch.int64)
+                else:
+                    inputs = sample_batch["image"].to(device, dtype=torch.float32)
+                    labels = sample_batch["label"].to(device, dtype=torch.int64)
+
+                # zero the gradient parameter
+                optimizer.zero_grad()
+                if phase == "train":
+                    a = for_train(my_model, inputs, labels, optimizer, criterion, iou, use_aux=use_lstm)
+                    running_loss += a
+                elif not args.random_crop:
+                    for_val(my_model, inputs, labels, iou)
+                else:
+                    for_test(my_model, inputs, labels, iou, lstm=use_lstm)
+
+            epoch_iou = iou.iou_demo()
+            epoch_loss = round(running_loss / len(dataloaders[phase]), 3)
+            if phase == "train":
+                train_miou_history.append(epoch_iou)
+                print("{} Loss: {:.4f} iou: {:.4f}".format(phase, epoch_loss, epoch_iou))
+
+            if phase == "val":
+                if epoch == num_epochs//2:
+                    optimizer.param_groups[0]["lr"] = optimizer.param_groups[0]["lr"] * 0.1
+                if epoch_iou > best_iou:
+                    best_iou = epoch_iou
+                    torch.save(my_model.state_dict(), save_name)
+                    print("get higher iou save current model")
+                val_miou_history.append(epoch_iou)
+                print('val miou history: ', val_miou_history)
+                print('train miou history: ', train_miou_history)
+
+    time_elapsed = time.time() - start_time
+    print("training complete in {:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
+
+
+def for_train(my_model, inputs, labels, optimizer, criterion, iou, use_aux):
+    # forward
+    # track history if only in train
+    with torch.set_grad_enabled(True):
+        if not use_aux:         # not use aux when lstm mode
+            outputs, aux_outputs = my_model(inputs)
+            loss1 = criterion(outputs, labels)
+            loss2 = criterion(aux_outputs, labels)
+            loss = loss1 + 0.4*loss2
+        else:
+            outputs = my_model(inputs)
+            loss = criterion(outputs, labels)
+    _, preds = torch.max(outputs, 1)   # (H, W)
+    iou.evaluate(labels, preds)
+    loss.backward()
+    optimizer.step()
+
+    # statistics
+    a = loss.item()
+    return a
+
+
+def for_val(my_model, inputs, labels, iou, need=False):
+    with torch.set_grad_enabled(False):
+        outputs = my_model(inputs)
+    _, preds = torch.max(outputs, 1)   # (H, W)
+    iou.evaluate(labels, preds)
+    if need:
+        return preds
+
+
+def for_test(my_model, inputs, labels, iou, lstm):
+    pred = predict_sliding(my_model, inputs, args.input_size, args.num_classes, lstm)
+    iou.evaluate(pred, labels)
