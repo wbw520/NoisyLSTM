@@ -5,6 +5,7 @@ import os
 import torch
 from img_aug import Aug
 from augg import ImageAugment
+import imgaug.augmenters as iaa
 from parameter import args
 
 
@@ -22,13 +23,13 @@ class DataSet(object):
     def __getitem__(self, index):
         datafiles = self.data_list[index]
         image, label = get_image(datafiles)
-        # image = np.array(image, dtype=np.float32)
-        # image -= self.mean	 # sub mean
+        image = np.array(image, dtype=np.float32)
+        image -= self.mean	 # sub mean
         if self.train and self.use_aug:
-            wbw = ImageAugment()
-            seq = wbw.aug_sequence()
-            image, label = wbw.aug(image, label, seq)
-            # image, label = Aug().cal(image, label)
+            # wbw = ImageAugment()
+            # seq = wbw.aug_sequence()
+            # image, label = wbw.aug(image, label, seq)
+            image, label = Aug().cal(image, label)
         image = image.transpose((2, 0, 1))
         image = torch.from_numpy(image/255)  # convert numpy data to tensor
         label = torch.from_numpy(label)
@@ -55,18 +56,24 @@ class DataSetSequence(object):
         names = []
         limit = sequence_len//2
         if self.train and self.use_aug:
-            wbw = ImageAugment()
-            seq = wbw.aug_sequence()
+            # wbw = ImageAugment()
+            # seq = wbw.aug_sequence()
+            wbw = Aug(use_sequence=True)
         for i in range(sequence_len):
+            hehe = False
             if self.train and self.use_noise and limit > 0 and i != sequence_len-1:
                 if randint(0, 100) > args.noise_ratio:
                     limit -= 1
                     sequence_data[i][0] = noise()
+                    hehe = True
             image, label = get_image(sequence_data[i])
-            # image = np.array(image, dtype=np.float32)
-            # image -= self.mean	 # sub mean
+            image = np.array(image, dtype=np.float32)
+            if hehe:
+                image = niuqu(image)
+            image -= self.mean	 # sub mean
             if self.train and self.use_aug:
-                image, label = wbw.aug(image, label, seq)
+                image, label = wbw.cal(image, label)
+                # image, label = wbw.aug(image, label, seq)
             images.append(image)
             labels.append(label)
             names.append(sequence_data[i][0])
@@ -83,6 +90,9 @@ def get_image(datafiles):
     need_h, need_w = args.need_size   # resize image for crop larger view area
     image = cv2.resize(image, (need_w, need_h), interpolation=cv2.INTER_LINEAR)
     label = cv2.resize(label, (need_w, need_h), interpolation=cv2.INTER_NEAREST)
+    # print(datafiles[0])
+    # print(datafiles[1])
+    # print("-----------")
     return image, label
 
 
@@ -91,7 +101,7 @@ class MakeList(object):
     this class used to make list of data for model train and test, return the name of each frame
     """
     def __init__(self, root):
-        self.root = root + "list/"
+        self.root = root
 
     def make_list(self):
         train_list = self.make_list_unit("train")
@@ -99,12 +109,7 @@ class MakeList(object):
         return {"train": train_list, "val": val_list}
 
     def make_list_unit(self, mode):
-        all_file = []
-        folder_name = get_name(self.root + mode + "/")
-        for i in folder_name:
-            current_city_root = self.root + mode + "/" + i + "/"
-            current_city_inf = self.read_txt(current_city_root)
-            all_file.extend(current_city_inf)
+        all_file = self.read_txt(self.root + "leftImg8bit/" + mode)
         return all_file
 
     def read_txt(self, root):  # get image and label root for one city
@@ -132,9 +137,10 @@ class MakeListSequence(object):
     this class used to make list of data for model train and test, return the name of each frame
     """
     def __init__(self, root, batch, random=False):
-        self.root = root + "list/"
+        self.root = root
         self.batch_size = batch
         self.random = random
+        self.frame_cut = 1
 
     def make_list(self):
         train_list = self.make_list_unit("train", for_train=self.random)
@@ -142,15 +148,10 @@ class MakeListSequence(object):
         return {"train": train_list, "val": val_list}
 
     def make_list_unit(self, mode, for_train=False):
-        all_file = []
-        folder_name = get_name(self.root + mode + "/")
-        for i in folder_name:
-            current_city_root = self.root + mode + "/" + i + "/"
-            current_city_inf = self.read_txt(current_city_root, for_train)
-            all_file.extend(current_city_inf)
+        all_file = self.read_txt(self.root + "leftImg8bit/" + mode, mode, for_train)
         return all_file
 
-    def read_txt(self, root, for_train):  # get image and label root for one city
+    def read_txt(self, root, mode, for_train):  # get image and label root for one city
         train_name = []
         label_name = []
         with open(root + "Images.txt", 'r', encoding='UTF-8') as data:
@@ -164,24 +165,33 @@ class MakeListSequence(object):
                 label_name.append(line[:-1])
 
         total = []
-        for i in range(len(train_name)-1):
+        for i in range(len(train_name)):
             temp = []
-            for j in range(self.batch_size)[::-1]:
-                if i < j:
-                    frame_id = 0
-                else:
-                    frame_id = i - j
-
-                if for_train and j > 1 and randint(0, 100) > args.noise_ratio and i > 0:
-                    frame_cu = frame_id + randint(-2, 2)
-                    while not (frame_cu >= 0 and frame_cu < i):
-                        frame_cu = frame_id + randint(-2, 2)
-                    frame_id = frame_cu
-
-                frame = [args.data_dir + train_name[frame_id], args.data_dir + label_name[frame_id]]
+            elements = train_name[i].split("/")
+            folder = elements[2]
+            number = elements[3].split("_")
+            frame_no = self.drop(number[2])
+            image_root = self.root + "leftImg8bit/" + mode + "/" + folder + "/"
+            for j in range(args.sequence_len):
+                current_no = frame_no - (args.sequence_len - j - 1)*self.frame_cut
+                current_no_str = self.name_translation(current_no)
+                current_img_name = number[0] + "_" + number[1] + "_" + current_no_str + "_" + "leftImg8bit.png"
+                frame = [image_root + current_img_name, self.root + label_name[i]]
                 temp.append(frame)
             total.append(temp)
         return total
+
+    def drop(self, number):
+        for i in range(len(number)):
+            if number[i] != "0":
+                return int(number[i:])
+
+    def name_translation(self, name):
+        # used to translate name in to "000" structure
+        name = str(name)
+        len_zero = 6 - len(name)
+        final = len_zero*"0" + name
+        return final
 
 
 def noise():
@@ -205,10 +215,16 @@ def get_name(root, mode_folder=True):
             return file
 
 
+def niuqu(image):
+    seq = iaa.Sequential([iaa.PiecewiseAffine(scale=(0.05, 0.05))])
+    im = seq(image=image)
+    return im
+
 # """
 # see the sequence data generation
 # """
 # L = MakeListSequence(args.data_dir, 4, random=True).make_list()
+# print(L["train"][0])
 # dataloaders = DataSetSequence(L["train"], use_noise=True)
 # for i_batch, sample_batch in enumerate(dataloaders):
 #     print(sample_batch["image"].size())

@@ -92,7 +92,7 @@ class PyramidPoolingModule(nn.Module):
                 self.features.append(nn.Sequential(
                     nn.AdaptiveAvgPool2d(s),
                     nn.Conv2d(in_dim, reduction_dim, kernel_size=1, bias=False),
-                    nn.BatchNorm2d(reduction_dim, momentum=.95),
+                    # nn.BatchNorm2d(reduction_dim, momentum=.95),
                     nn.ReLU(inplace=True)
                 ))
             else:

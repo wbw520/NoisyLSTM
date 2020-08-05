@@ -57,7 +57,7 @@ def load_data(lstm, random=True, batch_seq=args.sequence_len, batch_train=args.b
         L = MakeListSequence(args.data_dir, batch_seq, random=random).make_list()
         sequence_dataset = {"train": DataSetSequence(L["train"], use_noise=use_noise),
                        "val": DataSetSequence(L["val"], train=False, use_aug=False, use_noise=False)}
-        dataloaders_lstm = {x: DataLoader(sequence_dataset[x], batch_size=batch_train//batch_seq, shuffle=False, num_workers=4)
+        dataloaders_lstm = {x: DataLoader(sequence_dataset[x], batch_size=batch_train//batch_seq, shuffle=True, num_workers=4)
                             for x in ["train", "val"]}
         print("load lstm data over")
         return dataloaders_lstm
@@ -171,8 +171,8 @@ def predict_sliding(net, image, crop_size, classes, lstm):
         batch = image_size[0]
     else:
         batch = image_size[0]//args.sequence_len
-    full_probs = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).to(args.gpu)
-    count_predictions = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).to(args.gpu)
+    full_probs = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).cuda()
+    count_predictions = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).cuda()
 
     for row in range(tile_rows):
         for col in range(tile_cols):
@@ -199,3 +199,4 @@ def predict_sliding(net, image, crop_size, classes, lstm):
     full_probs /= count_predictions
     _, preds = torch.max(full_probs, 1)
     return preds
+

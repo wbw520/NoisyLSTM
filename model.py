@@ -50,14 +50,14 @@ class PspNet(nn.Module):
         super(PspNet, self).__init__()
         self.use_aux = use_aux
         self.use_lstm = use_lstm
-        base_model = BackNet("resnet50", pretrained=pretrained).back()
+        base_model = BackNet("resnet101", pretrained=pretrained).back()
         self.layer0 = nn.Sequential(base_model.conv1, base_model.bn1, base_model.relu, base_model.maxpool)
         self.layer1, self.layer2, self.layer3, self.layer4 = base_model.layer1, base_model.layer2, base_model.layer3, base_model.layer4
         self.ppm = PyramidPoolingModule(2048, 512, (1, 2, 3, 6), lstm=use_lstm)
         if not use_lstm:
             self.final1 = nn.Sequential(
                 nn.Conv2d(4096, 512, kernel_size=3, padding=1, bias=False),
-                nn.BatchNorm2d(512, momentum=.95),
+                # nn.BatchNorm2d(512, momentum=.95),
                 nn.ReLU(inplace=True),
                 nn.Dropout(0.1),
             )

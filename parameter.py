@@ -10,19 +10,19 @@ def get_arguments():
     parser = argparse.ArgumentParser(description="PSP-Net Network")
 
     # train settings
-    parser.add_argument("--batch-size", type=int, default=16,
+    parser.add_argument("--batch-size", type=int, default=32,
                         help="Number of images sent to the network in one step.")
     parser.add_argument("--sequence_len", type=int, default=4,
                         help="Length of sequence for LSTM model.")
-    parser.add_argument("--data-dir", type=str, default="/home/wangbowen/PycharmProjects/city/",
+    parser.add_argument("--data-dir", type=str, default="/home/wangbowen/PycharmProjects/city_data2/",
                         help="Path to the directory containing the image list.")
     parser.add_argument("--data-extra", type=str, default="/home/wangbowen/PycharmProjects/data_eye_train/",
                         help="Path to the directory of noise data")
     parser.add_argument("--original-size", type=int, default=[1024, 2048],
                         help="original size of data set image.")
-    parser.add_argument("--need-size", type=int, default=[256, 512],
+    parser.add_argument("--need-size", type=int, default=[1024, 2048],
                         help="image size require for this program.")
-    parser.add_argument("--input-size", type=int, default=[448, 448],
+    parser.add_argument("--input-size", type=int, default=[784, 784],
                         help="Comma-separated string with height and width of images. It also consider as crop size.")
     parser.add_argument("--learning-rate", type=float, default=0.0001,
                         help="Base learning rate for training with polynomial decay.")
@@ -38,7 +38,7 @@ def get_arguments():
                         help="whether use aux branch for training")
 
     # augment tools
-    parser.add_argument("--random-crop", type=bool, default=False,
+    parser.add_argument("--random-crop", type=bool, default=True,
                         help="Whether to randomly crop the inputs during the training.")
     parser.add_argument("--random-mirror", type=bool, default=True,
                         help="Whether to randomly mirror the inputs during the training.")
@@ -56,7 +56,9 @@ def get_arguments():
                         help="Where restore model parameters from.")
     parser.add_argument("--snapshot-dir", type=str, default="PSP.pt",
                         help="name to save the model.")
-    parser.add_argument("--gpu", type=str, default='cuda:3',
+    parser.add_argument("--gpu", type=str, default='cuda:0',
+                        help="choose gpu device.")
+    parser.add_argument("--multi", type=bool, default=True,
                         help="choose gpu device.")
     return parser.parse_args()
 

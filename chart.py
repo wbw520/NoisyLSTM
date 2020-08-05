@@ -1,10 +1,20 @@
-# #n 50_0
-# road:0.968 sidewalk:0.752 building:0.869 wall:0.316 fence:0.42 pole:0.298 traffic light:0.388 traffic sign:0.539 vegetation:0.867 terrain:0.549 sky:0.904 person:0.625 rider:0.396 car:0.89 truck:0.595 bus:0.715 train:0.618 motorcycle:0.349 bicycle:0.561
-# val miou history:  [0.502, 0.526, 0.529, 0.565, 0.528, 0.544, 0.524, 0.545, 0.547, 0.54, 0.587, 0.533, 0.522, 0.561, 0.585, 0.561, 0.558, 0.569, 0.558, 0.517, 0.589, 0.614, 0.619, 0.614, 0.616, 0.616, 0.619, 0.616, 0.621, 0.62, 0.616, 0.615, 0.615, 0.611, 0.617, 0.62, 0.616, 0.62, 0.614, 0.612]
-# train miou history:  [0.522, 0.61, 0.608, 0.658, 0.661, 0.648, 0.638, 0.658, 0.684, 0.688, 0.696, 0.694, 0.682, 0.675, 0.701, 0.714, 0.708, 0.717, 0.69, 0.708, 0.72, 0.738, 0.746, 0.749, 0.752, 0.754, 0.757, 0.757, 0.759, 0.76, 0.761, 0.762, 0.764, 0.765, 0.766, 0.766, 0.767, 0.768, 0.768, 0.771]
+# full psp
+# road:0.978 sidewalk:0.832 building:0.92 wall:0.534 fence:0.573 pole:0.621 traffic light:0.702 traffic sign:0.77 vegetation:0.921 terrain:0.628 sky:0.935 person:0.818 rider:0.611 car:0.948 truck:0.786 bus:0.8 train:0.537 motorcycle:0.651 bicycle:0.765
+# val miou history:  [0.627, 0.593, 0.673, 0.617, 0.693, 0.656, 0.716, 0.744, 0.745, 0.749, 0.743, 0.757, 0.754]
 
-#ls_1
-# road:0.962 sidewalk:0.726 building:0.869 wall:0.404 fence:0.376 pole:0.306 traffic light:0.381 traffic sign:0.534 vegetation:0.869 terrain:0.54 sky:0.902 person:0.62 rider:0.389 car:0.889 truck:0.574 bus:0.684 train:0.418 motorcycle:0.331 bicycle:0.568
+# psp_full_0
+# road:0.977 sidewalk:0.817 building:0.907 wall:0.473 fence:0.51 pole:0.511 traffic light:0.595 traffic sign:0.696 vegetation:0.908 terrain:0.632 sky:0.933 person:0.753 rider:0.539 car:0.931 truck:0.718 bus:0.822 train:0.697 motorcycle:0.531 bicycle:0.717
+# val miou history:  [0.593, 0.648, 0.613, 0.663, 0.679, 0.613, 0.684, 0.713, 0.714, 0.719, 0.714, 0.718, 0.719]
+
+# psp_full_1
+# road:0.977 sidewalk:0.817 building:0.907 wall:0.538 fence:0.522 pole:0.514 traffic light:0.597 traffic sign:0.709 vegetation:0.909 terrain:0.603 sky:0.934 person:0.754 rider:0.553 car:0.932 truck:0.735 bus:0.775 train:0.437 motorcycle:0.572 bicycle:0.712
+# val miou history:  [0.593, 0.619, 0.639, 0.643, 0.654, 0.661, 0.59, 0.711, 0.705, 0.712, 0.711, 0.707, 0.71]
+
+# psp_full_2
+# road:0.976 sidewalk:0.816 building:0.908 wall:0.519 fence:0.513 pole:0.509 traffic light:0.602 traffic sign:0.708 vegetation:0.909 terrain:0.614 sky:0.935 person:0.754 rider:0.549 car:0.933 truck:0.751 bus:0.784 train:0.527 motorcycle:0.496 bicycle:0.71
+# val miou history:  [0.59, 0.622, 0.669, 0.66, 0.647, 0.678, 0.666, 0.702, 0.708, 0.711, 0.709, 0.708, 0.711]
+
+# psp_full_3
+# road:0.977 sidewalk:0.822 building:0.909 wall:0.534 fence:0.558 pole:0.509 traffic light:0.595 traffic sign:0.705 vegetation:0.908 terrain:0.62 sky:0.932 person:0.754 rider:0.546 car:0.93 truck:0.684 bus:0.842 train:0.661 motorcycle:0.545 bicycle:0.714
 # get higher iou save current model
-# val miou history:  [0.507, 0.519, 0.531, 0.581, 0.487, 0.546, 0.542, 0.568, 0.539, 0.53, 0.564, 0.521, 0.534, 0.581, 0.546, 0.569, 0.564, 0.576, 0.553, 0.579, 0.524, 0.584, 0.589, 0.591, 0.588, 0.59, 0.591, 0.591, 0.593, 0.591, 0.593, 0.593, 0.591, 0.594, 0.594, 0.592, 0.592, 0.594, 0.595, 0.597]
-# train miou history:  [0.516, 0.611, 0.651, 0.679, 0.644, 0.655, 0.671, 0.7, 0.712, 0.698, 0.697, 0.705, 0.718, 0.735, 0.737, 0.719, 0.741, 0.754, 0.747, 0.749, 0.747, 0.753, 0.766, 0.772, 0.775, 0.778, 0.781, 0.783, 0.785, 0.786, 0.788, 0.79, 0.791, 0.792, 0.794, 0.794, 0.796, 0.797, 0.798, 0.798]
+# val miou history:  [0.563, 0.631, 0.662, 0.65, 0.643, 0.687, 0.689, 0.717, 0.714, 0.72 0.716, 0.721, 0.723]

@@ -1,11 +1,11 @@
 import time
 import torch
-from tools import IouCal, predict_sliding
+from tools import IouCal, predict_sliding, load_data
 from parameter import args
 from tqdm.auto import tqdm
 
 
-def train_model(my_model, dataloaders, criterion, optimizer, save_name, num_epochs=30, use_lstm=False, device=args.gpu):
+def train_model(my_model, dataloaders, criterion, optimizer, save_name, num_epochs=30, use_lstm=False, device=args.gpu, use_aux=False):
     start_time = time.time()
 
     train_miou_history = []
@@ -23,6 +23,8 @@ def train_model(my_model, dataloaders, criterion, optimizer, save_name, num_epoc
                 print(optimizer.param_groups[0]["lr"])
                 my_model.train()  # set model to train
             else:
+                # if (epoch+1) % 3 != 0:
+                #     continue
                 print("start_val round" + str(epoch))
                 my_model.eval()   # set model to evaluation
 
@@ -30,22 +32,25 @@ def train_model(my_model, dataloaders, criterion, optimizer, save_name, num_epoc
             for i_batch, sample_batch in enumerate(tqdm(dataloaders[phase])):
                 if len(list(sample_batch["image"])) < args.batch_size//args.sequence_len:
                     continue
+                if args.multi:
+                    inputs = sample_batch["image"].cuda().float()
+                    labels = sample_batch["label"].cuda().long()
+                else:
+                    inputs = sample_batch["image"].to(device, dtype=torch.float32)
+                    labels = sample_batch["label"].to(device, dtype=torch.int64)
                 if use_lstm:
-                    inputs = torch.cat(list(sample_batch["image"]), dim=0).to(device, dtype=torch.float32)
-                    labels = list(sample_batch["label"])
+                    inputs = torch.cat(list(inputs), dim=0)
+                    labels = list(labels)
                     # spilt final frame label for each sequence
                     label_for_pred = []
                     for i in range(len(labels)):
                         label_for_pred.append(labels[i][-1:])
-                    labels = torch.cat(label_for_pred, dim=0).to(device, dtype=torch.int64)
-                else:
-                    inputs = sample_batch["image"].to(device, dtype=torch.float32)
-                    labels = sample_batch["label"].to(device, dtype=torch.int64)
+                    labels = torch.cat(label_for_pred, dim=0)
 
                 # zero the gradient parameter
                 optimizer.zero_grad()
                 if phase == "train":
-                    a = for_train(my_model, inputs, labels, optimizer, criterion, iou, use_aux=use_lstm)
+                    a = for_train(my_model, inputs, labels, optimizer, criterion, iou, use_aux=use_aux)
                     running_loss += a
                 elif not args.random_crop:
                     for_val(my_model, inputs, labels, iou)
@@ -59,7 +64,7 @@ def train_model(my_model, dataloaders, criterion, optimizer, save_name, num_epoc
                 print("{} Loss: {:.4f} iou: {:.4f}".format(phase, epoch_loss, epoch_iou))
 
             if phase == "val":
-                if epoch == num_epochs//2:
+                if epoch == 20 or epoch == 40:
                     optimizer.param_groups[0]["lr"] = optimizer.param_groups[0]["lr"] * 0.1
                 if epoch_iou > best_iou:
                     best_iou = epoch_iou
@@ -77,7 +82,7 @@ def for_train(my_model, inputs, labels, optimizer, criterion, iou, use_aux):
     # forward
     # track history if only in train
     with torch.set_grad_enabled(True):
-        if not use_aux:         # not use aux when lstm mode
+        if use_aux:         # not use aux when lstm mode
             outputs, aux_outputs = my_model(inputs)
             loss1 = criterion(outputs, labels)
             loss2 = criterion(aux_outputs, labels)

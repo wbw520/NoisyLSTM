@@ -39,7 +39,7 @@ def test_model(model, lstm, noise, device):
 
 
 if __name__ == '__main__':
-    model_name = "psp3.pt"
+    model_name = "psp_full_3.pt"
     use_lstm = False
     init_model = PspNet(args.num_classes, use_aux=False, use_lstm=use_lstm)
     init_model.load_state_dict(torch.load(model_name, map_location=args.gpu), strict=False)
