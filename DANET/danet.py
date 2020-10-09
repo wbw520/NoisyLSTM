@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from DANET.backbone import ResNet50
 from model_unit import LsConv
-from parameter import args
 
 
 class DANet(ResNet50):
@@ -27,8 +26,9 @@ class DANet(ResNet50):
         "Dual Attention Network for Scene Segmentation." *CVPR*, 2019
     """
 
-    def __init__(self, nclass, aux=False, lstm=False, **kwargs):
+    def __init__(self, args, nclass, aux=False, lstm=False, **kwargs):
         super(DANet, self).__init__(nclass)
+        self.args = args
         self.head = _DAHead(2048, nclass, aux, **kwargs)
         self.aux = aux
         self.lstm = lstm
@@ -44,7 +44,7 @@ class DANet(ResNet50):
         feature_map, _ = self.base_forward(x)
         c3, c4 = feature_map[2], feature_map[3]
         if self.lstm:
-            train_list = list(c4.split(args.sequence_len, dim=0))
+            train_list = list(c4.split(self.args.sequence_len, dim=0))
             list_for_lstm = []
             for i in range(len(train_list)):
                 # list_for_lstm.append(torch.unsqueeze(train_list[i][:-1], dim=0))

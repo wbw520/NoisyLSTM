@@ -6,14 +6,14 @@ import torch
 from img_aug import Aug
 from augg import ImageAugment
 import imgaug.augmenters as iaa
-from parameter import args
 
 
 class DataSet(object):
-    def __init__(self, data_list, train=True, use_aug=True):
+    def __init__(self, args, data_list, train=True, use_aug=True):
         self.data_list = data_list
         self.train = train
         self.use_aug = use_aug
+        self.args = args
         self.mean = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
 
     def __len__(self):
@@ -22,14 +22,14 @@ class DataSet(object):
     # return one sample image and its label
     def __getitem__(self, index):
         datafiles = self.data_list[index]
-        image, label = get_image(datafiles)
+        image, label = get_image(self.args, datafiles)
         image = np.array(image, dtype=np.float32)
-        image -= self.mean	 # sub mean
         if self.train and self.use_aug:
             # wbw = ImageAugment()
             # seq = wbw.aug_sequence()
             # image, label = wbw.aug(image, label, seq)
-            image, label = Aug().cal(image, label)
+            image, label = Aug(self.args).cal(image, label)
+        image -= self.mean	 # sub mean
         image = image.transpose((2, 0, 1))
         image = torch.from_numpy(image/255)  # convert numpy data to tensor
         label = torch.from_numpy(label)
@@ -37,11 +37,12 @@ class DataSet(object):
 
 
 class DataSetSequence(object):
-    def __init__(self, data_list, train=True, use_aug=True, use_noise=False):
+    def __init__(self, args, data_list, train=True, use_aug=True, use_noise=False):
         self.data_list = data_list
         self.use_noise = use_noise
         self.train = train
         self.use_aug = use_aug
+        self.args = args
         self.mean = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
 
     def __len__(self):
@@ -58,22 +59,25 @@ class DataSetSequence(object):
         if self.train and self.use_aug:
             # wbw = ImageAugment()
             # seq = wbw.aug_sequence()
-            wbw = Aug(use_sequence=True)
+            wbw = Aug(self.args, use_sequence=True)
         for i in range(sequence_len):
-            hehe = False
-            if self.train and self.use_noise and limit > 0 and i != sequence_len-1:
-                if randint(0, 100) > args.noise_ratio:
+            # hehe = False
+            if self.use_noise and limit > 0 and i != sequence_len-1:
+                if randint(0, 100) > self.args.noise_ratio:
+                    print("------------")
                     limit -= 1
-                    sequence_data[i][0] = noise()
-                    hehe = True
-            image, label = get_image(sequence_data[i])
+                    sequence_data[i][0] = noise(self.args)
+                    # hehe = True
+            image, label = get_image(self.args, sequence_data[i])
             image = np.array(image, dtype=np.float32)
-            if hehe:
-                image = niuqu(image)
-            image -= self.mean	 # sub mean
+            # if hehe:
+            #     image = niuqu(image)
+            # h, w, c = image.shape
+            # if hehe:
+            #     image = np.random.uniform(0, 255, (h, w, c))
             if self.train and self.use_aug:
                 image, label = wbw.cal(image, label)
-                # image, label = wbw.aug(image, label, seq)
+            image -= self.mean	 # sub mean
             images.append(image)
             labels.append(label)
             names.append(sequence_data[i][0])
@@ -83,7 +87,7 @@ class DataSetSequence(object):
         return {"image": images, "label": labels, "name": names}
 
 
-def get_image(datafiles):
+def get_image(args, datafiles):
     image = cv2.imread(datafiles[0], cv2.IMREAD_COLOR)	 # shape(1024,2048,3)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     label = cv2.imread(datafiles[1], cv2.IMREAD_GRAYSCALE)	 # shape(1024,2048)
@@ -100,8 +104,9 @@ class MakeList(object):
     """
     this class used to make list of data for model train and test, return the name of each frame
     """
-    def __init__(self, root):
-        self.root = root
+    def __init__(self, args):
+        self.root = args.data_dir
+        self.args = args
 
     def make_list(self):
         train_list = self.make_list_unit("train")
@@ -127,7 +132,7 @@ class MakeList(object):
 
         total = []
         for i in range(len(train_name)-1):
-            total.append([args.data_dir + train_name[i], args.data_dir + label_name[i]])
+            total.append([self.args.data_dir + train_name[i], self.args.data_dir + label_name[i]])
 
         return total
 
@@ -136,11 +141,12 @@ class MakeListSequence(object):
     """
     this class used to make list of data for model train and test, return the name of each frame
     """
-    def __init__(self, root, batch, random=False):
+    def __init__(self, args, root, batch, random=False):
         self.root = root
         self.batch_size = batch
         self.random = random
         self.frame_cut = 1
+        self.args = args
 
     def make_list(self):
         train_list = self.make_list_unit("train", for_train=self.random)
@@ -172,8 +178,8 @@ class MakeListSequence(object):
             number = elements[3].split("_")
             frame_no = self.drop(number[2])
             image_root = self.root + "leftImg8bit/" + mode + "/" + folder + "/"
-            for j in range(args.sequence_len):
-                current_no = frame_no - (args.sequence_len - j - 1)*self.frame_cut
+            for j in range(self.args.sequence_len):
+                current_no = frame_no - (self.args.sequence_len - j - 1)*self.frame_cut
                 current_no_str = self.name_translation(current_no)
                 current_img_name = number[0] + "_" + number[1] + "_" + current_no_str + "_" + "leftImg8bit.png"
                 frame = [image_root + current_img_name, self.root + label_name[i]]
@@ -194,7 +200,7 @@ class MakeListSequence(object):
         return final
 
 
-def noise():
+def noise(args):
     ff = ["left_frames", "right_frames"]
     folder_name = get_name(args.data_extra)
     selected_id_folder = np.random.randint(0, len(folder_name))
@@ -216,7 +222,13 @@ def get_name(root, mode_folder=True):
 
 
 def niuqu(image):
-    seq = iaa.Sequential([iaa.PiecewiseAffine(scale=(0.05, 0.05))])
+    seq = iaa.Sequential([iaa.PiecewiseAffine(scale=0.1, seed=1)])
+    im = seq(image=image)
+    return im
+
+
+def gauss(image):
+    seq = iaa.Sequential([iaa.GaussianBlur(2, seed=1)])
     im = seq(image=image)
     return im
 

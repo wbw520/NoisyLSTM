@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torchvision import models
 import torch.nn.functional as F
-from parameter import args
 
 
 ########################################
@@ -83,10 +82,11 @@ class BackNet(object):
 
 
 class PyramidPoolingModule(nn.Module):
-    def __init__(self, in_dim, reduction_dim, setting, lstm=False):
+    def __init__(self, args, in_dim, reduction_dim, setting, lstm=False):
         super(PyramidPoolingModule, self).__init__()
         self.lstm = lstm
         self.features = []
+        self.args = args
         for s in setting:
             if lstm:
                 self.features.append(nn.Sequential(
@@ -112,17 +112,8 @@ class PyramidPoolingModule(nn.Module):
     def forward(self, x):
         x_size = x.size()
         if self.lstm:
-            train_list = list(x.split(args.sequence_len, dim=0))
-            list_for_lstm = []
-            for i in range(len(train_list)):
-                # list_for_lstm.append(torch.unsqueeze(train_list[i][:-1], dim=0))
-                list_for_lstm.append(torch.unsqueeze(train_list[i], dim=0))
-            if len(list_for_lstm) == 1:
-                final_lstm = list_for_lstm[0]
-            else:
-                final_lstm = torch.cat(list_for_lstm, dim=0)
+            final_lstm = lstm_function(x, self.args.sequence_len)
             FL = self.CON_ls(final_lstm)
-
             # list_for_straight = []
             # for i in range(len(train_list)):
             #     list_for_straight.append(train_list[i][-1:])
@@ -145,11 +136,21 @@ class PyramidPoolingModule(nn.Module):
         return out
 
 
+def lstm_function(x, sequence_len):
+    train_list = list(x.split(sequence_len, dim=0))
+    list_for_lstm = []
+    for i in range(len(train_list)):
+        list_for_lstm.append(torch.unsqueeze(train_list[i], dim=0))
+    if len(list_for_lstm) == 1:
+        final_lstm = list_for_lstm[0]
+    else:
+        final_lstm = torch.cat(list_for_lstm, dim=0)
+    return final_lstm
 ################################################
 # LSTM module
 ################################################
 class LsConv(nn.Module):
-    def __init__(self, input_dim, hidden_dim, kernel_size, num_layers, merge=True):
+    def __init__(self, input_dim, hidden_dim, kernel_size, num_layers, merge=False):
         super(LsConv, self).__init__()
         self.merge = merge
         self.LC = ConvLSTM(input_dim=input_dim, hidden_dim=hidden_dim, kernel_size=kernel_size, num_layers=num_layers)
@@ -159,7 +160,7 @@ class LsConv(nn.Module):
         if self.merge:
             return last_states[0][0]
         else:
-            return x[0]
+            return x[0][0]
 
 
 class ConvLSTMCell(nn.Module):

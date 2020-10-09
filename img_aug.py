@@ -1,15 +1,15 @@
 import cv2
 import random
 import math
-from parameter import args
 
 
 class Aug(object):
-    def __init__(self, use_sequence=False):
+    def __init__(self, args, use_sequence=False):
         self.crop_point = None
         self.flip_point = None
         self.scale_point = None
         self.rotate_point = None
+        self.args = args
         self.use_scale = args.random_scale
         self.use_mirror = args.random_mirror
         self.use_rotate = args.random_rotate
@@ -29,12 +29,12 @@ class Aug(object):
     def cal(self, image, label):
         if self.use_scale:	 # if use multi scale
             image, label = self.generate_scale_label(image, label)
-            image, label = self.scale(image, label, args.ignore_label)  # padding for scale
+            image, label = self.scale(image, label, self.args.ignore_label)  # padding for scale
         image, label = self.crop(image, label)  # random crop
         if self.use_mirror:
             image, label = self.mirror(image, label)
         if self.use_rotate:
-            image, label = self.rotate(image, label, args.ignore_label)
+            image, label = self.rotate(image, label, self.args.ignore_label)
         return image, label
 
     def scale(self, image, label, ignore_label):

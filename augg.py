@@ -1,7 +1,6 @@
 import imgaug.augmenters as iaa
 import matplotlib.pyplot as plt
 import random
-from parameter import args
 import cv2
 import numpy as np
 
@@ -19,7 +18,8 @@ class ImageAugment(object):
     """
     class for augment the training data using imgaug
     """
-    def __init__(self):
+    def __init__(self, args):
+        self.args = args
         self.key = 0
         self.rotate = np.random.randint(-15, 15)
         self.scale_x = random.uniform(0.8, 1.2)
@@ -92,7 +92,7 @@ class ImageAugment(object):
             scale={"x": self.scale_x, "y": self.scale_y},  # scale images to 80-120% of their size
             translate_percent={"x": self.translate_x, "y": self.translate_y},  # translate by -20 to +20 percent (per axis)
             rotate=(self.rotate),  # rotate by -15 to +15 degrees
-            cval=args.ignore_label
+            cval=self.args.ignore_label
         ))
 
         # ##### Dangerous Augmentation

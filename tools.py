@@ -4,8 +4,13 @@ import torch
 import cv2
 from torch.utils.data import DataLoader
 from math import ceil
-from parameter import args
+from torch.utils.data import DistributedSampler
 from data_gen import MakeListSequence, MakeList, DataSet, DataSetSequence
+import torch
+import torch.nn as nn
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib.patches import ConnectionPatch
+import torch.nn.functional as F
 
 
 def load_weight(model_pre, model_new):
@@ -43,37 +48,130 @@ def print_param(model):
             print(name)
 
 
-def show_single(image):
+def show_single(image, location):
     # show single image
-    image = cv2.resize(image, (args.original_size[1], args.original_size[0]), interpolation=cv2.INTER_NEAREST)
-    plt.figure(figsize=(10, 10), facecolor="#FFFFFF")
+    image = np.array(image, dtype=np.uint8)
+    # image = cv2.resize(image, (args.original_size[1], args.original_size[0]), interpolation=cv2.INTER_NEAREST)
+    fig, ax = plt.subplots(1, 1)
+    axins1 = ax.inset_axes((0.2, 0.05, 0.3, 0.3))
+    axins2 = ax.inset_axes((0.6, 0.2, 0.3, 0.3))
+    axins3 = ax.inset_axes((0.25, 0.7, 0.25, 0.25))
+    make_da(210, 440, 350, 600, image, axins1, ax)
+    make_da2(1220, 1380, 210, 320, image, axins2, ax)
+    make_da3(630, 770, 430, 570, image, axins3, ax)
+    plt.xticks([])
+    plt.yticks([])
     plt.imshow(image)
-    plt.axis('on')
+    fig.set_size_inches(2048/100.0, 1024/100.0) #输出width*height像素
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    plt.subplots_adjust(top=1,bottom=0,left=0,right=1,hspace =0, wspace =0)
+    plt.margins(0,0)
+    plt.savefig("imgs/"+location+".png", bbox_inches='tight', pad_inches=0)
     plt.show()
 
 
-def load_data(lstm, random=True, batch_seq=args.sequence_len, batch_train=args.batch_size, use_noise=False):
+def make_da(xlim0, xlim1, ylim0, ylim1, image, axins, ax):
+    axins.imshow(image)
+    axins.set_xlim(xlim0, xlim1)
+    axins.set_ylim(ylim1, ylim0)
+    axins.axis("off")
+    tx0 = xlim0
+    tx1 = xlim1
+    ty0 = ylim0
+    ty1 = ylim1
+    sx = [tx0, tx1, tx1, tx0, tx0]
+    sy = [ty0, ty0, ty1, ty1, ty0]
+    ax.plot(sx, sy, "black", linewidth="4")
+
+    xy = (xlim1, ylim0)
+    xy2 = (xlim0, ylim0)
+    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+                          axesA=axins, axesB=ax, linewidth="4")
+    axins.add_artist(con)
+
+    xy = (xlim1, ylim1)
+    xy2 = (xlim0, ylim1)
+    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+                          axesA=axins, axesB=ax, linewidth="4")
+    axins.add_artist(con)
+
+
+def make_da2(xlim0, xlim1, ylim0, ylim1, image, axins, ax):
+    axins.imshow(image)
+    axins.set_xlim(xlim0, xlim1)
+    axins.set_ylim(ylim1, ylim0)
+    axins.axis("off")
+    tx0 = xlim0
+    tx1 = xlim1
+    ty0 = ylim0
+    ty1 = ylim1
+    sx = [tx0, tx1, tx1, tx0, tx0]
+    sy = [ty0, ty0, ty1, ty1, ty0]
+    ax.plot(sx, sy, "black", linewidth="4")
+
+    xy = (xlim0, ylim1)
+    xy2 = (xlim0, ylim0)
+    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+                          axesA=axins, axesB=ax, linewidth="4")
+    axins.add_artist(con)
+
+    xy = (xlim1, ylim1)
+    xy2 = (xlim1, ylim0)
+    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+                          axesA=axins, axesB=ax, linewidth="4")
+    axins.add_artist(con)
+
+
+def make_da3(xlim0, xlim1, ylim0, ylim1, image, axins, ax):
+    axins.imshow(image)
+    axins.set_xlim(xlim0, xlim1)
+    axins.set_ylim(ylim1, ylim0)
+    axins.axis("off")
+    tx0 = xlim0
+    tx1 = xlim1
+    ty0 = ylim0
+    ty1 = ylim1
+    sx = [tx0, tx1, tx1, tx0, tx0]
+    sy = [ty0, ty0, ty1, ty1, ty0]
+    ax.plot(sx, sy, "black", linewidth="4")
+
+    xy = (xlim0, ylim0)
+    xy2 = (xlim0, ylim1)
+    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+                          axesA=axins, axesB=ax, linewidth="4")
+    axins.add_artist(con)
+
+    xy = (xlim1, ylim0)
+    xy2 = (xlim1, ylim1)
+    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+                          axesA=axins, axesB=ax, linewidth="4")
+    axins.add_artist(con)
+
+
+def load_data(args, lstm, random=True, use_noise=False):
+    shuffle = {"train": True, "val": False}
     if lstm:
-        L = MakeListSequence(args.data_dir, batch_seq, random=random).make_list()
-        sequence_dataset = {"train": DataSetSequence(L["train"], use_noise=use_noise),
-                       "val": DataSetSequence(L["val"], train=False, use_aug=False, use_noise=False)}
-        dataloaders_lstm = {x: DataLoader(sequence_dataset[x], batch_size=batch_train//batch_seq, shuffle=True, num_workers=4)
+        L = MakeListSequence(args, args.data_dir, args.sequence_len, random=random).make_list()
+        sequence_dataset = {"train": DataSetSequence(args, L["train"], use_noise=use_noise),
+                            "val": DataSetSequence(args, L["val"], train=False, use_aug=False, use_noise=True)}
+        dataloaders_lstm = {x: DataLoader(sequence_dataset[x], batch_size=args.batch_size//args.sequence_len, shuffle=shuffle[x], num_workers=0)
                             for x in ["train", "val"]}
         print("load lstm data over")
         return dataloaders_lstm
     else:
-        L = MakeList(args.data_dir).make_list()
-        image_dataset = {"train": DataSet(L["train"]),
-                         "val": DataSet(L["val"], train=False, use_aug=False)}
-        dataloaders = {x: DataLoader(image_dataset[x], batch_size=batch_train, shuffle=True, num_workers=4)
+        L = MakeList(args).make_list()
+        image_dataset = {"train": DataSet(args, L["train"]),
+                         "val": DataSet(args, L["val"], train=False, use_aug=False)}
+        dataloaders = {x: DataLoader(image_dataset[x], batch_size=args.batch_size, shuffle=True, num_workers=4)
                        for x in ["train", "val"]}
         print("load normal data over")
         return dataloaders
 
 
 class IouCal(object):
-    def __init__(self, num_class=args.num_classes):
-        self.num_class = num_class
+    def __init__(self, args):
+        self.num_class = args.num_classes
         self.hist = np.zeros((self.num_class, self.num_class))
         self.name = ["road:", "sidewalk:", "building:", "wall:", "fence:", "pole:", "traffic light:", "traffic sign:",
                      "vegetation:", "terrain:", "sky:", "person:", "rider:", "car:", "truck:", "bus:", "train:",
@@ -106,26 +204,26 @@ class ColorTransition(object):
     def __init__(self, ignore_label=19):
         self.root = "/home/wbw/PycharmProjects/city/gtFine/train/"
         self.root_new = "/home/wbw/PycharmProjects/city_hehe/train/"
-        self.color = [[128, 64, 128],   # class 0   road
-                      [244, 35, 232],   # class 1   sidewalk
-                      [70, 70, 70],     # class 2   building
-                      [102, 102, 156],  # class 3   wall
-                      [190, 153, 153],  # class 4   fence
-                      [153, 153, 153],  # class 5   pole
-                      [250, 170, 30],   # class 6   traffic light
-                      [220, 220, 0],    # class 7   traffic sign
-                      [107, 142, 35],   # class 8   vegetation
-                      [152, 251, 152],  # class 9   terrain
-                      [70, 130, 180],   # class 10  sky
-                      [220, 20, 60],    # class 11  person
-                      [255, 0, 0],      # class 12  rider
-                      [0, 0, 142],      # class 13  car
-                      [0, 0, 70],       # class 14  truck
-                      [0, 60, 100],     # class 15  bus
-                      [0, 80, 100],     # class 16  train
-                      [0, 0, 230],      # class 17  motorcycle
-                      [119, 11, 32],    # class 18  bicycle
-                      [0, 0, 0]]        # class 19  background
+        self.color = {0: [128, 64, 128],   # class 0   road
+                      1: [244, 35, 232],   # class 1   sidewalk
+                      2: [70, 70, 70],     # class 2   building
+                      3: [102, 102, 156],  # class 3   wall
+                      4: [190, 153, 153],  # class 4   fence
+                      5: [153, 153, 153],  # class 5   pole
+                      6: [250, 170, 30],   # class 6   traffic light
+                      7: [220, 220, 0],    # class 7   traffic sign
+                      8: [107, 142, 35],   # class 8   vegetation
+                      9: [152, 251, 152],  # class 9   terrain
+                      10: [70, 130, 180],   # class 10  sky
+                      11: [220, 20, 60],    # class 11  person
+                      12: [255, 0, 0],      # class 12  rider
+                      13: [0, 0, 142],      # class 13  car
+                      14: [0, 0, 70],       # class 14  truck
+                      15: [0, 60, 100],     # class 15  bus
+                      16: [0, 80, 100],     # class 16  train
+                      17: [0, 0, 230],      # class 17  motorcycle
+                      18: [119, 11, 32],    # class 18  bicycle
+                      19: [0, 0, 0]}        # class 19  background
         self.id_to_trainid = {-1: ignore_label, 0: ignore_label, 1: ignore_label, 2: ignore_label,
                           3: ignore_label, 4: ignore_label, 5: ignore_label, 6: ignore_label,
                           7: 0, 8: 1, 9: ignore_label, 10: ignore_label, 11: 2, 12: 3, 13: 4,
@@ -134,23 +232,33 @@ class ColorTransition(object):
                           28: 15, 29: ignore_label, 30: ignore_label, 31: 16, 32: 17, 33: 18}
 
     def recover(self, image):  # convert predict of binary to color
-        h, w = image.shape
-        color_image = np.zeros((h, w, 3))
-        for i in range(h):
-            for j in range(w):
-                color_image[i][j] = self.color[int(image[i][j])]
+        image = image.cpu().detach().numpy()
+        color_image = self.id2trainId(image, reverse=True)
         return color_image.astype(np.uint8)
 
-    # trainslate label_id to train_id
     def id2trainId(self, label, reverse=False):
-        label_copy = label.copy()
         if reverse:
-            for v, k in self.id_to_trainid.items():
-                label_copy[label == k] = v
+            w, h = label.shape
+            label_copy = np.zeros((w, h, 3), dtype=np.uint8)
+            for index, color in self.color.items():
+                label_copy[label == index] = color
         else:
-            for k, v in self.id_to_trainid.items():
-                label_copy[label == k] = v
+            w, h, c = label.shape
+            label_copy = np.zeros((w, h), dtype=np.uint8)
+            for index, color in self.color.items():
+                label_copy[np.logical_and(*list([label[:, :, i] == color[i] for i in range(3)]))] = index
         return label_copy
+
+    # # trainslate label_id to train_id
+    # def id2trainId(self, label, reverse=False):
+    #     label_copy = label.copy()
+    #     if reverse:
+    #         for v, k in self.id_to_trainid.items():
+    #             label_copy[label == k] = v
+    #     else:
+    #         for k, v in self.id_to_trainid.items():
+    #             label_copy[label == k] = v
+    #     return label_copy
 
 
 def pad_image(img, target_size):
@@ -161,18 +269,18 @@ def pad_image(img, target_size):
     return padded_img
 
 
-def predict_sliding(net, image, crop_size, classes, lstm):
+def predict_sliding(args, net, image, crop_size, classes, lstm):
     image_size = image.size()
     tile_rows = ceil(image_size[2]/crop_size[0])
     tile_cols = ceil(image_size[3]/crop_size[1])
     stride_rows = crop_size[0] - (crop_size[0]*tile_rows - image_size[2])//(tile_rows-1)
     stride_cols = crop_size[1] - (crop_size[1]*tile_cols - image_size[3])//(tile_cols-1)
-    if not lstm:
+    if not lstm or args.show_sequence:
         batch = image_size[0]
     else:
         batch = image_size[0]//args.sequence_len
-    full_probs = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).cuda()
-    count_predictions = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).cuda()
+    full_probs = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).to(args.device)
+    count_predictions = torch.from_numpy(np.zeros((batch, classes, image_size[2], image_size[3]))).to(args.device)
 
     for row in range(tile_rows):
         for col in range(tile_cols):
@@ -187,11 +295,12 @@ def predict_sliding(net, image, crop_size, classes, lstm):
                 x2 = image_size[3]
                 x1 = image_size[3] - crop_size[1]
 
-            # print(x1, x2, y1, y2)
             img = image[:, :, y1:y2, x1:x2]
 
             with torch.set_grad_enabled(False):
                 padded_prediction = net(img)
+                if isinstance(padded_prediction, tuple):
+                    padded_prediction = padded_prediction[0]
             count_predictions[:, :, y1:y2, x1:x2] += 1
             full_probs[:, :, y1:y2, x1:x2] += padded_prediction  # accumulate the predictions
 
@@ -200,3 +309,30 @@ def predict_sliding(net, image, crop_size, classes, lstm):
     _, preds = torch.max(full_probs, 1)
     return preds
 
+
+"""Custom losses."""
+class ICNetLoss(nn.CrossEntropyLoss):
+    """Cross Entropy Loss for ICNet"""
+
+    def __init__(self, aux_weight=0.4, ignore_index=-1):
+        super(ICNetLoss, self).__init__(ignore_index=ignore_index)
+        self.aux_weight = aux_weight
+
+    def forward(self, preds, target):
+        pred, pred_sub4, pred_sub8, pred_sub16 = preds
+        # [batch, H, W] -> [batch, 1, H, W]
+        target = target.unsqueeze(1).float()
+        target_sub4 = F.interpolate(target, pred_sub4.size()[2:], mode='bilinear', align_corners=True).squeeze(1).long()
+        target_sub8 = F.interpolate(target, pred_sub8.size()[2:], mode='bilinear', align_corners=True).squeeze(1).long()
+        target_sub16 = F.interpolate(target, pred_sub16.size()[2:], mode='bilinear', align_corners=True).squeeze(
+            1).long()
+        loss1 = super(ICNetLoss, self).forward(pred_sub4, target_sub4)
+        loss2 = super(ICNetLoss, self).forward(pred_sub8, target_sub8)
+        loss3 = super(ICNetLoss, self).forward(pred_sub16, target_sub16)
+        #return dict(loss=loss1 + loss2 * self.aux_weight + loss3 * self.aux_weight)
+        return loss1 + loss2 * self.aux_weight + loss3 * self.aux_weight
+
+#
+# image = cv2.imread("imgs/ns.png", cv2.IMREAD_COLOR)
+# image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+# show_single(image, "pp_ns")
