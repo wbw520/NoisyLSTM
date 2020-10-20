@@ -4,7 +4,7 @@ from engine import for_test
 import torch
 import argparse
 import torch.nn as nn
-from sync_batchnorm import convert_model
+from tools.sync_batchnorm import convert_model
 from train import get_args_parser
 from tqdm.auto import tqdm
 

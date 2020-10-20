@@ -4,7 +4,7 @@ from tools.data_gen import load_data
 import torch.optim as optim
 import torch
 import torch.nn as nn
-from sync_batchnorm import convert_model
+from tools.sync_batchnorm import convert_model
 import argparse
 
 

@@ -5,7 +5,7 @@ from engine import for_val, for_test
 import cv2
 from tools.data_gen import niuqu, gauss
 import torch.nn as nn
-from sync_batchnorm import convert_model
+from tools.sync_batchnorm import convert_model
 import numpy as np
 import torch
 
