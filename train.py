@@ -38,7 +38,7 @@ def get_args_parser():
     parser.add_argument("--use_pre", type=bool, default=False)
 
     # lstm setting
-    parser.add_argument("--lstm", type=bool, default=False)
+    parser.add_argument("--lstm", type=bool, default=True)
     parser.add_argument("--merge", type=bool, default=True,
                         help="merge previous frame, set false for all frame visualization")
     parser.add_argument("--lstm_kernel", type=int, default=1)
