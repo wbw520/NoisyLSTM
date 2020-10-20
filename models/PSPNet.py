@@ -4,47 +4,6 @@ import torch.nn.functional as F
 from models.model_unit import *
 
 
-class UNet(nn.Module):
-    def __init__(self, n_channels, n_classes, bilinear=True):
-        super(UNet, self).__init__()
-        self.k = 64
-        self.n_channels = n_channels
-        self.n_classes = n_classes
-        self.bilinear = bilinear
-
-        self.inc = DoubleConv(n_channels, self.k)
-        self.down1 = Down(self.k, 2*self.k)
-        self.down2 = Down(2*self.k, 4*self.k)
-        self.down3 = Down(4*self.k, 8*self.k)
-        self.down4 = Down(8*self.k, 8*self.k)
-        self.up1 = Up(8*self.k, bilinear)
-        self.C1 = DoubleConv(16*self.k, 4*self.k)
-        self.up2 = Up(4*self.k, bilinear)
-        self.C2 = DoubleConv(8*self.k, 2*self.k)
-        self.up3 = Up(2*self.k, bilinear)
-        self.C3 = DoubleConv(4*self.k, self.k)
-        self.up4 = Up(self.k, bilinear)
-        self.C4 = DoubleConv(2*self.k, self.k)
-        self.outc = OutConv(self.k, n_classes)
-
-    def forward(self, x):
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        x = self.up1(x5, x4)
-        x = self.C1(x)
-        x = self.up2(x, x3)
-        x = self.C2(x)
-        x = self.up3(x, x2)
-        x = self.C3(x)
-        x = self.up4(x, x1)
-        x = self.C4(x)
-        logits = self.outc(x)
-        return logits
-
-
 class PspNet(nn.Module):
     def __init__(self, args, pretrained=True, use_aux=False, use_lstm=False):
         super(PspNet, self).__init__()
