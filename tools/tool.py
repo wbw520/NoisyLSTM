@@ -1,16 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-import cv2
-from torch.utils.data import DataLoader
 from math import ceil
-from torch.utils.data import DistributedSampler
-from data_gen import MakeListSequence, MakeList, DataSet, DataSetSequence
 import torch
 import torch.nn as nn
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.patches import ConnectionPatch
+# from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+# from matplotlib.patches import ConnectionPatch
 import torch.nn.functional as F
+from models.DeepLab.deeplab import DeepLab
+from models.FCN import FCN8s, VGGNet
+from models.DANET.danet import get_danet
+from models.ICNet.icnet import ICNet
+from models.PSPNet import PspNet
 
 
 def load_weight(model_pre, model_new):
@@ -48,125 +48,55 @@ def print_param(model):
             print(name)
 
 
-def show_single(image, location):
+def show_single(image, location=None, save=False):
     # show single image
     image = np.array(image, dtype=np.uint8)
     # image = cv2.resize(image, (args.original_size[1], args.original_size[0]), interpolation=cv2.INTER_NEAREST)
-    fig, ax = plt.subplots(1, 1)
-    axins1 = ax.inset_axes((0.2, 0.05, 0.3, 0.3))
-    axins2 = ax.inset_axes((0.6, 0.2, 0.3, 0.3))
-    axins3 = ax.inset_axes((0.25, 0.7, 0.25, 0.25))
-    make_da(210, 440, 350, 600, image, axins1, ax)
-    make_da2(1220, 1380, 210, 320, image, axins2, ax)
-    make_da3(630, 770, 430, 570, image, axins3, ax)
-    plt.xticks([])
-    plt.yticks([])
+    # fig, ax = plt.subplots(1, 1)
+    # axins1 = ax.inset_axes((0.2, 0.05, 0.3, 0.3))
+    # axins2 = ax.inset_axes((0.6, 0.2, 0.3, 0.3))
+    # axins3 = ax.inset_axes((0.25, 0.7, 0.25, 0.25))
+    # make_da(210, 440, 350, 600, image, axins1, ax)
+    # make_da2(1220, 1380, 210, 320, image, axins2, ax)
+    # make_da3(630, 770, 430, 570, image, axins3, ax)
+    # plt.xticks([])
+    # plt.yticks([])
     plt.imshow(image)
-    fig.set_size_inches(2048/100.0, 1024/100.0) #输出width*height像素
-    plt.gca().xaxis.set_major_locator(plt.NullLocator())
-    plt.gca().yaxis.set_major_locator(plt.NullLocator())
-    plt.subplots_adjust(top=1,bottom=0,left=0,right=1,hspace =0, wspace =0)
-    plt.margins(0,0)
-    plt.savefig("imgs/"+location+".png", bbox_inches='tight', pad_inches=0)
+    # fig.set_size_inches(2048/100.0, 1024/100.0) #输出width*height像素
+    # plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    # plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    plt.subplots_adjust(top=1, bottom=0, left=0, right=1, hspace=0, wspace=0)
+    plt.margins(0, 0)
+    if save:
+        plt.savefig("imgs/"+location+".png", bbox_inches='tight', pad_inches=0)
     plt.show()
 
 
-def make_da(xlim0, xlim1, ylim0, ylim1, image, axins, ax):
-    axins.imshow(image)
-    axins.set_xlim(xlim0, xlim1)
-    axins.set_ylim(ylim1, ylim0)
-    axins.axis("off")
-    tx0 = xlim0
-    tx1 = xlim1
-    ty0 = ylim0
-    ty1 = ylim1
-    sx = [tx0, tx1, tx1, tx0, tx0]
-    sy = [ty0, ty0, ty1, ty1, ty0]
-    ax.plot(sx, sy, "black", linewidth="4")
-
-    xy = (xlim1, ylim0)
-    xy2 = (xlim0, ylim0)
-    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
-                          axesA=axins, axesB=ax, linewidth="4")
-    axins.add_artist(con)
-
-    xy = (xlim1, ylim1)
-    xy2 = (xlim0, ylim1)
-    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
-                          axesA=axins, axesB=ax, linewidth="4")
-    axins.add_artist(con)
-
-
-def make_da2(xlim0, xlim1, ylim0, ylim1, image, axins, ax):
-    axins.imshow(image)
-    axins.set_xlim(xlim0, xlim1)
-    axins.set_ylim(ylim1, ylim0)
-    axins.axis("off")
-    tx0 = xlim0
-    tx1 = xlim1
-    ty0 = ylim0
-    ty1 = ylim1
-    sx = [tx0, tx1, tx1, tx0, tx0]
-    sy = [ty0, ty0, ty1, ty1, ty0]
-    ax.plot(sx, sy, "black", linewidth="4")
-
-    xy = (xlim0, ylim1)
-    xy2 = (xlim0, ylim0)
-    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
-                          axesA=axins, axesB=ax, linewidth="4")
-    axins.add_artist(con)
-
-    xy = (xlim1, ylim1)
-    xy2 = (xlim1, ylim0)
-    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
-                          axesA=axins, axesB=ax, linewidth="4")
-    axins.add_artist(con)
-
-
-def make_da3(xlim0, xlim1, ylim0, ylim1, image, axins, ax):
-    axins.imshow(image)
-    axins.set_xlim(xlim0, xlim1)
-    axins.set_ylim(ylim1, ylim0)
-    axins.axis("off")
-    tx0 = xlim0
-    tx1 = xlim1
-    ty0 = ylim0
-    ty1 = ylim1
-    sx = [tx0, tx1, tx1, tx0, tx0]
-    sy = [ty0, ty0, ty1, ty1, ty0]
-    ax.plot(sx, sy, "black", linewidth="4")
-
-    xy = (xlim0, ylim0)
-    xy2 = (xlim0, ylim1)
-    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
-                          axesA=axins, axesB=ax, linewidth="4")
-    axins.add_artist(con)
-
-    xy = (xlim1, ylim0)
-    xy2 = (xlim1, ylim1)
-    con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
-                          axesA=axins, axesB=ax, linewidth="4")
-    axins.add_artist(con)
-
-
-def load_data(args, lstm, random=True, use_noise=False):
-    shuffle = {"train": True, "val": False}
-    if lstm:
-        L = MakeListSequence(args, args.data_dir, args.sequence_len, random=random).make_list()
-        sequence_dataset = {"train": DataSetSequence(args, L["train"], use_noise=use_noise),
-                            "val": DataSetSequence(args, L["val"], train=False, use_aug=False, use_noise=True)}
-        dataloaders_lstm = {x: DataLoader(sequence_dataset[x], batch_size=args.batch_size//args.sequence_len, shuffle=shuffle[x], num_workers=0)
-                            for x in ["train", "val"]}
-        print("load lstm data over")
-        return dataloaders_lstm
-    else:
-        L = MakeList(args).make_list()
-        image_dataset = {"train": DataSet(args, L["train"]),
-                         "val": DataSet(args, L["val"], train=False, use_aug=False)}
-        dataloaders = {x: DataLoader(image_dataset[x], batch_size=args.batch_size, shuffle=True, num_workers=4)
-                       for x in ["train", "val"]}
-        print("load normal data over")
-        return dataloaders
+# #for drawing magnify images
+# def make_da(xlim0, xlim1, ylim0, ylim1, image, axins, ax):
+#     axins.imshow(image)
+#     axins.set_xlim(xlim0, xlim1)
+#     axins.set_ylim(ylim1, ylim0)
+#     axins.axis("off")
+#     tx0 = xlim0
+#     tx1 = xlim1
+#     ty0 = ylim0
+#     ty1 = ylim1
+#     sx = [tx0, tx1, tx1, tx0, tx0]
+#     sy = [ty0, ty0, ty1, ty1, ty0]
+#     ax.plot(sx, sy, "black", linewidth="4")
+#
+#     xy = (xlim1, ylim0)
+#     xy2 = (xlim0, ylim0)
+#     con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+#                           axesA=axins, axesB=ax, linewidth="4")
+#     axins.add_artist(con)
+#
+#     xy = (xlim1, ylim1)
+#     xy2 = (xlim0, ylim1)
+#     con = ConnectionPatch(xyA=xy2, xyB=xy, coordsA="data", coordsB="data",
+#                           axesA=axins, axesB=ax, linewidth="4")
+#     axins.add_artist(con)
 
 
 class IouCal(object):
@@ -202,8 +132,6 @@ class IouCal(object):
 
 class ColorTransition(object):
     def __init__(self, ignore_label=19):
-        self.root = "/home/wbw/PycharmProjects/city/gtFine/train/"
-        self.root_new = "/home/wbw/PycharmProjects/city_hehe/train/"
         self.color = {0: [128, 64, 128],   # class 0   road
                       1: [244, 35, 232],   # class 1   sidewalk
                       2: [70, 70, 70],     # class 2   building
@@ -224,6 +152,7 @@ class ColorTransition(object):
                       17: [0, 0, 230],      # class 17  motorcycle
                       18: [119, 11, 32],    # class 18  bicycle
                       19: [0, 0, 0]}        # class 19  background
+
         self.id_to_trainid = {-1: ignore_label, 0: ignore_label, 1: ignore_label, 2: ignore_label,
                           3: ignore_label, 4: ignore_label, 5: ignore_label, 6: ignore_label,
                           7: 0, 8: 1, 9: ignore_label, 10: ignore_label, 11: 2, 12: 3, 13: 4,
@@ -236,6 +165,7 @@ class ColorTransition(object):
         color_image = self.id2trainId(image, reverse=True)
         return color_image.astype(np.uint8)
 
+    # trainslate label_id to train_id for color img
     def id2trainId(self, label, reverse=False):
         if reverse:
             w, h = label.shape
@@ -249,16 +179,16 @@ class ColorTransition(object):
                 label_copy[np.logical_and(*list([label[:, :, i] == color[i] for i in range(3)]))] = index
         return label_copy
 
-    # # trainslate label_id to train_id
-    # def id2trainId(self, label, reverse=False):
-    #     label_copy = label.copy()
-    #     if reverse:
-    #         for v, k in self.id_to_trainid.items():
-    #             label_copy[label == k] = v
-    #     else:
-    #         for k, v in self.id_to_trainid.items():
-    #             label_copy[label == k] = v
-    #     return label_copy
+    # trainslate label_id to train_id for binary img
+    def id2trainIdbinary(self, label, reverse=False):
+        label_copy = label.copy()
+        if reverse:
+            for v, k in self.id_to_trainid.items():
+                label_copy[label == k] = v
+        else:
+            for k, v in self.id_to_trainid.items():
+                label_copy[label == k] = v
+        return label_copy
 
 
 def pad_image(img, target_size):
@@ -332,7 +262,28 @@ class ICNetLoss(nn.CrossEntropyLoss):
         #return dict(loss=loss1 + loss2 * self.aux_weight + loss3 * self.aux_weight)
         return loss1 + loss2 * self.aux_weight + loss3 * self.aux_weight
 
-#
-# image = cv2.imread("imgs/ns.png", cv2.IMREAD_COLOR)
-# image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-# show_single(image, "pp_ns")
+
+def load_model(args):
+    vgg_model = VGGNet(requires_grad=True, show_params=False)
+    model = {
+        "PSPNet": PspNet(args, use_lstm=args.lstm),
+        "ICNet": ICNet(args, use_lstm=args.lstm),
+        "FCN": FCN8s(pretrained_net=vgg_model, n_class=args.num_classes),
+        "DeepLab": DeepLab(backbone='resnet', output_stride=16),
+        "NaNet": get_danet(args)
+    }
+    init_model = model[args.model_name]
+    if args.use_pre:
+        if args.model_name == "ICNet":
+            pre_model = ICNet(args, use_lstm=False)
+            pre_name = "ICNet"
+        else:
+            pre_model = PspNet(args, use_aux=False, use_lstm=False)
+            pre_name = "PSPNet"
+        pre_model.load_state_dict(torch.load("saved_model/" + pre_name + ".pt"), strict=True)
+        print("load pre-train param over")
+        load_weight(pre_model, init_model)
+        # fix_parameter(init_model, ["final1", "final2", "CON_ls"])
+        # print("param could be trained")
+        # print_param(init_model)
+    return init_model

@@ -87,6 +87,8 @@ class PyramidPoolingModule(nn.Module):
         self.lstm = lstm
         self.features = []
         self.args = args
+        kernel_size = self.args.lstm_kernel
+        layer = self.args.lstm_layer
         for s in setting:
             if lstm:
                 self.features.append(nn.Sequential(
@@ -105,7 +107,8 @@ class PyramidPoolingModule(nn.Module):
         self.features = nn.ModuleList(self.features)
         if lstm:
             self.CON_ls = nn.Sequential(
-                LsConv(in_dim, hidden_dim=[int(in_dim)], kernel_size=(1, 1), num_layers=1),
+                LsConv(in_dim, hidden_dim=[int(in_dim)], kernel_size=(kernel_size, kernel_size),
+                       num_layers=layer, merge=args.merge),
                 nn.ReLU(inplace=True)
             )
 
@@ -114,15 +117,6 @@ class PyramidPoolingModule(nn.Module):
         if self.lstm:
             final_lstm = lstm_function(x, self.args.sequence_len)
             FL = self.CON_ls(final_lstm)
-            # list_for_straight = []
-            # for i in range(len(train_list)):
-            #     list_for_straight.append(train_list[i][-1:])
-            # if len(list_for_straight) == 1:
-            #     final_straight = list_for_straight[0]
-            # else:
-            #     final_straight = torch.cat(list_for_straight, dim=0)
-
-            # merge = torch.cat([FL, final_straight], dim=1)
             merge = FL
             out = [merge]
             for f in self.features:
@@ -150,7 +144,7 @@ def lstm_function(x, sequence_len):
 # LSTM module
 ################################################
 class LsConv(nn.Module):
-    def __init__(self, input_dim, hidden_dim, kernel_size, num_layers, merge=False):
+    def __init__(self, input_dim, hidden_dim, kernel_size, num_layers, merge=True):
         super(LsConv, self).__init__()
         self.merge = merge
         self.LC = ConvLSTM(input_dim=input_dim, hidden_dim=hidden_dim, kernel_size=kernel_size, num_layers=num_layers)

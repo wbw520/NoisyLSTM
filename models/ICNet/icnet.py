@@ -2,8 +2,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from model_unit import LsConv, lstm_function
-from models.segbase import SegBaseModel
+from models.model_unit import LsConv, lstm_function
+from models.ICNet.segbase import SegBaseModel
 
 
 class ICNet(SegBaseModel):
@@ -22,17 +22,19 @@ class ICNet(SegBaseModel):
         self.head = _ICHead(nclass)
         self.use_lstm = use_lstm
         self.args = args
+        kernel_size = self.args.lstm_kernel
+        layer = self.args.lstm_layer
         if use_lstm:
             self.CON_ls_1 = nn.Sequential(
-                LsConv(64, hidden_dim=[int(64)], kernel_size=(1, 1), num_layers=1),
+                LsConv(64, hidden_dim=[int(64)], kernel_size=(kernel_size, kernel_size), num_layers=layer, merge=args.merge),
                 nn.ReLU(inplace=True)
             )
             self.CON_ls_2 = nn.Sequential(
-                LsConv(512, hidden_dim=[int(512)], kernel_size=(1, 1), num_layers=1),
+                LsConv(512, hidden_dim=[int(512)], kernel_size=(kernel_size, kernel_size), num_layers=layer, merge=args.merge),
                 nn.ReLU(inplace=True)
             )
             self.CON_ls_4 = nn.Sequential(
-                LsConv(2048, hidden_dim=[int(2048)], kernel_size=(1, 1), num_layers=1),
+                LsConv(2048, hidden_dim=[int(2048)], kernel_size=(kernel_size, kernel_size), num_layers=layer, merge=args.merge),
                 nn.ReLU(inplace=True)
             )
 

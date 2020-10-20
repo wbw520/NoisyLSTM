@@ -1,12 +1,9 @@
-from tools import load_data, ColorTransition, IouCal, show_single
+from tools.tool import ColorTransition, IouCal, show_single, load_model
 from train import get_args_parser
 import argparse
-from model import PspNet
-from modeling.deeplab import DeepLab
-from train_model import for_val, for_test
-import torch
+from engine import for_val, for_test
 import cv2
-from data_gen import niuqu, gauss
+from tools.data_gen import niuqu, gauss
 import torch.nn as nn
 from sync_batchnorm import convert_model
 import numpy as np
@@ -39,17 +36,9 @@ def make_image_lstm(model, device):
     images = []
     for i in range(4):
         image = cv2.imread(root_image + image_name + "0000" + str(nm + i) + "_leftImg8bit.png", cv2.IMREAD_COLOR)
-        if i == 2:
-            ppp = niuqu(image)
-            ppp = gauss(ppp)
-            cv2.imwrite("imgs/origin_niu.png", ppp)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, (1024, 512), interpolation=cv2.INTER_LINEAR)
         image = np.array(image, dtype=np.float32)
-        if i != 3:
-            image = niuqu(image)
-            image = gauss(image)
-            # show_single(args, image, "niuqu")
         image -= mean
         images.append(image)
 
@@ -63,7 +52,7 @@ def make_image_lstm(model, device):
     predict = for_test(args, model, inputs, labels, iou, lstm=use_lstm, need=True)
     print(predict.size())
     for i in range(4):
-        color_img = ColorTransition().recover(predict[i])
+        color_img = ColorTransition().recover(predict[0])
         # color_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
         # if i == 3:
             # show_single(args, color_img, "ls_noise")
@@ -75,17 +64,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     use_lstm = True
-    # model_name = "/home/wbw/saved_model/PSPnetLLS_.pt"
-    # init_model = PspNet(args, use_aux=False, use_lstm=use_lstm)
-    # init_model = convert_model(init_model)
-    # init_model = init_model.cuda()
-    # init_model = nn.DataParallel(init_model, device_ids=[0])
-    # init_model.load_state_dict(torch.load(model_name), strict=True)
-    # init_model.eval()
-    # print("load pre-train param over")
-    # # img = "lindau_000058_000007_leftImg8bit.png"
-    # make_image_lstm(init_model, device=args.device)
-    image = cv2.imread("yyyy.png", cv2.IMREAD_COLOR)
-    image = niuqu(image)
-    image = gauss(image)
-    cv2.imwrite("imgs.png", image)
+    model_name = "saved_model/ICNet.pt"
+    init_model = load_model(args)
+    init_model = convert_model(init_model)
+    init_model = init_model.cuda()
+    init_model = nn.DataParallel(init_model, device_ids=[0])
+    init_model.load_state_dict(torch.load(model_name), strict=True)
+    init_model.eval()
+    print("load param over")

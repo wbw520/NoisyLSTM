@@ -2,8 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from DANET.backbone import ResNet50
-from model_unit import LsConv
+from models.DANET.backbone import ResNet50
 
 
 class DANet(ResNet50):
@@ -26,37 +25,19 @@ class DANet(ResNet50):
         "Dual Attention Network for Scene Segmentation." *CVPR*, 2019
     """
 
-    def __init__(self, args, nclass, aux=False, lstm=False, **kwargs):
-        super(DANet, self).__init__(nclass)
+    def __init__(self, args, aux=False, lstm=False, **kwargs):
+        super(DANet, self).__init__(args.num_classes)
         self.args = args
-        self.head = _DAHead(2048, nclass, aux, **kwargs)
+        self.head = _DAHead(2048, args.num_classes, aux, **kwargs)
         self.aux = aux
         self.lstm = lstm
         self.__setattr__('exclusive', ['head'])
-        if lstm:
-            self.CON_ls = nn.Sequential(
-                LsConv(2048, hidden_dim=[int(2048)], kernel_size=(1, 1), num_layers=1),
-                nn.ReLU(inplace=True)
-            )
 
     def forward(self, x):
         size = x.size()[2:]
         feature_map, _ = self.base_forward(x)
         c3, c4 = feature_map[2], feature_map[3]
-        if self.lstm:
-            train_list = list(c4.split(self.args.sequence_len, dim=0))
-            list_for_lstm = []
-            for i in range(len(train_list)):
-                # list_for_lstm.append(torch.unsqueeze(train_list[i][:-1], dim=0))
-                list_for_lstm.append(torch.unsqueeze(train_list[i], dim=0))
-            if len(list_for_lstm) == 1:
-                final_lstm = list_for_lstm[0]
-            else:
-                final_lstm = torch.cat(list_for_lstm, dim=0)
-            FL = self.CON_ls(final_lstm)
-            x = self.head(FL)
-        else:
-            x = self.head(c4)
+        x = self.head(c4)
         x0 = F.interpolate(x[0], size, mode='bilinear', align_corners=True)
 
         if self.aux:

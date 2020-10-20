@@ -1,7 +1,7 @@
 import math
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
-from modeling.sync_batchnorm.batchnorm import SynchronizedBatchNorm2d
+from models.DeepLab.sync_batchnorm.batchnorm import SynchronizedBatchNorm2d
 
 class Bottleneck(nn.Module):
     expansion = 4

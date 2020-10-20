@@ -1,6 +1,6 @@
 """Base Model for Semantic Segmentation"""
 import torch.nn as nn
-from model_unit import BackNet
+from models.model_unit import BackNet
 
 __all__ = ['SegBaseModel']
 

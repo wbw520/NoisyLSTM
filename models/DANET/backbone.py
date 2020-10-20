@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from DANET import resnet
+from models.DANET import resnet
 from torch.nn import functional as F
 
 

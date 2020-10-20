@@ -1,10 +1,10 @@
 import time
 import torch
-from tools import IouCal, predict_sliding, load_data, ICNetLoss
+from tools.tool import IouCal, predict_sliding
 from tqdm.auto import tqdm
 
 
-def train_model(args, my_model, dataloaders, criterion, optimizer, save_name, num_epochs=30, use_lstm=False, use_aux=False):
+def train_model(args, my_model, dataloaders, criterion, optimizer, save_name, num_epochs=40, use_lstm=False, use_aux=False):
     start_time = time.time()
     device = args.device
     train_miou_history = []

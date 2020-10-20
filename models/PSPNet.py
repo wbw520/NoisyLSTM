@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from model_unit import *
+from models.model_unit import *
 
 
 class UNet(nn.Module):
