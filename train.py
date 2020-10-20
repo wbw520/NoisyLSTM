@@ -12,7 +12,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser(description="PSP-Net Network", add_help=False)
 
     # train settings
-    parser.add_argument("--model_name", type=str, default="ICNet")
+    parser.add_argument("--model_name", type=str, default="PSPNet")
     parser.add_argument("--batch_size", type=int, default=16,
                         help="Number of images sent to the network in one step.")
     parser.add_argument("--sequence_len", type=int, default=4,
@@ -93,7 +93,7 @@ def train(args):
         criterion = torch.nn.CrossEntropyLoss(ignore_index=args.ignore_label)
     print("start train")
     save_name = args.model_name + f"{'_lstm' if args.lstm else ''}" + f"{'_noise' if args.noise else ''}"
-    print(save_name)
+    print("model name: ", save_name)
     train_model(args, init_model, dataloaders, criterion, optimizer,
                 save_name, num_epochs=args.num_epoch, use_lstm=args.lstm)
 
