@@ -14,13 +14,19 @@ Download from [Cityscapes](https://www.cityscapes-dataset.com/), set leftimg8bit
 (For Noisy-LSTM training, leftImg8bit_sequence_trainvaltest data is necessary.)
 
 ##### Training for PSPNet (Base Model)
+```
 python train.py --model_name PSPNet --lstm False --noise False --data_dir
+```
 
 ##### Training for PSPNet-based Nosiy-LSTM without noises
+```
 python train.py --model_name PSPNet --lstm True --use_pre True --noise False --data_dir
+```
 
 ##### Training for PSPNet-based Nosiy-LSTM with noise
+```
 python train.py --model_name PSPNet --lstm True --use_pre True --noise False --noise_type extra --noise_ratio 50 --data_dir --data_extra
+```
 
 ## Acknowledgements
 This work was supported by Council for Science, Technology and Innovation (CSTI), cross-ministerial Strategic Innovation Promotion Program (SIP), Innovative AI Hospital System (Funding Agency: National Institute of Biomedical Innovation, Health and Nutrition (NIBIOHN)). This work was also supported by JSPS KAKENHI Grant Number 19K10662 and 20K23343.
