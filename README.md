@@ -13,6 +13,8 @@ Semantic video segmentation is a key challenge for various applications. This pa
 Download from [Cityscapes](https://www.cityscapes-dataset.com/), set leftimg8bit and gitFine folder under your data_dir.
 (For Noisy-LSTM training, leftImg8bit_sequence_trainvaltest data is necessary.)
 
+For extra data, download [Endovis2018](https://cataracts2018.grand-challenge.org/) and set folder under your data_extra.
+
 ##### Training for PSPNet (Base Model)
 ```
 python train.py --model_name PSPNet --lstm False --noise False --data_dir
