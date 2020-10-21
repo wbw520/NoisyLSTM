@@ -59,7 +59,7 @@ def get_args_parser():
     parser.add_argument("--noise_ratio", type=int, default=50,
                         help="define the possibility of noise.")
 
-    # evaluation settings
+    # device settings
     parser.add_argument('--num_workers', default=4, type=int)
     parser.add_argument('--show_sequence', default=False, type=bool)
     parser.add_argument('--multi_gpu', default=False, type=bool)
