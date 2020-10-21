@@ -26,6 +26,7 @@ This work was supported by Council for Science, Technology and Innovation (CSTI)
 
 ## Publication
 If you want to use this work, please consider citing the following paper.
+```
 @misc{wang2020noisylstm,
       title={Noisy-LSTM: Improving Temporal Awareness for Video Semantic Segmentation}, 
       author={Bowen Wang and Liangzhi Li and Yuta Nakashima and Ryo Kawasaki and Hajime Nagahara and Yasushi Yagi},
@@ -34,3 +35,4 @@ If you want to use this work, please consider citing the following paper.
       archivePrefix={arXiv},
       primaryClass={cs.CV}
 }
+```
