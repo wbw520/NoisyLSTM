@@ -270,7 +270,7 @@ def load_model(args):
         "ICNet": ICNet(args, use_lstm=args.lstm),
         "FCN": FCN8s(pretrained_net=vgg_model, n_class=args.num_classes),
         "DeepLab": DeepLab(backbone='resnet', output_stride=16),
-        "NaNet": get_danet(args)
+        "DaNet": get_danet(args)
     }
     init_model = model[args.model_name]
     if args.use_pre:
