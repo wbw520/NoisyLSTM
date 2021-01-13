@@ -280,7 +280,7 @@ def load_model(args):
         checkpoint = torch.load("saved_model/" + pre_name + ".pt")
         new_state_dict = OrderedDict()
         for k, v in checkpoint.items():
-            name = k[7:] # remove `backbone.`
+            name = k[7:] # remove `module.`
             new_state_dict[name] = v
         pre_model.load_state_dict(new_state_dict, strict=True)
         print("load pre-train param over")
