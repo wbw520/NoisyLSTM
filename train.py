@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 from tools.sync_batchnorm import convert_model
 import argparse
+from tools.tool import print_param
 
 
 def get_args_parser():

@@ -276,7 +276,8 @@ def load_model(args):
         else:
             pre_model = PspNet(args, use_aux=False, use_lstm=False)
             pre_name = "PSPNet"
-        pre_model.load_state_dict(torch.load("saved_model/" + pre_name + ".pt"), strict=True)
+        checkpoint = torch.load("saved_model/" + pre_name + ".pt")
+        pre_model.load_state_dict(checkpoint, strict=True)
         print("load pre-train param over")
         load_weight(pre_model, init_model)
         # fix_parameter(init_model, ["final1", "final2", "CON_ls"])

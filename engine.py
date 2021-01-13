@@ -61,7 +61,7 @@ def train_model(args, my_model, dataloaders, criterion, optimizer, save_name, nu
                     optimizer.param_groups[0]["lr"] = optimizer.param_groups[0]["lr"] * 0.1
                 if epoch_iou > best_iou:
                     best_iou = epoch_iou
-                    torch.save(my_model.state_dict(), "saved_model/" + save_name + ".pt")
+                    torch.save(my_model.module.state_dict(), "saved_model/" + save_name + ".pt")
                     print("get higher iou save current model")
                 val_miou_history.append(epoch_iou)
                 print('val miou history: ', val_miou_history)
