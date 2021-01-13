@@ -264,15 +264,11 @@ class ICNetLoss(nn.CrossEntropyLoss):
 
 
 def load_model(args):
-    vgg_model = VGGNet(requires_grad=True, show_params=False)
-    model = {
-        "PSPNet": PspNet(args, use_lstm=args.lstm),
-        "ICNet": ICNet(args, use_lstm=args.lstm),
-        "FCN": FCN8s(pretrained_net=vgg_model, n_class=args.num_classes),
-        "DeepLab": DeepLab(backbone='resnet', output_stride=16),
-        "DaNet": get_danet(args)
-    }
-    init_model = model[args.model_name]
+    if args.model_name == "ICNet":
+        init_model = ICNet(args, use_lstm=args.lstm)
+    else:
+        init_model = PspNet(args, use_lstm=args.lstm)
+
     if args.use_pre:
         if args.model_name == "ICNet":
             pre_model = ICNet(args, use_lstm=False)

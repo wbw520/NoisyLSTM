@@ -17,7 +17,7 @@ def get_args_parser():
                         help="Number of images sent to the network in one step.")
     parser.add_argument("--sequence_len", type=int, default=4,
                         help="Length of sequence for LSTM model.")
-    parser.add_argument("--data_dir", type=str, default="/home/wangbowen/PycharmProjects/city_data2/",
+    parser.add_argument("--data_dir", type=str, default="/home/wangbowen/",
                         help="Path to the directory containing the image list.")
     parser.add_argument("--data_extra", type=str, default="/home/wangbowen/PycharmProjects/data_eye_train/",
                         help="Path to the directory of noise data")
@@ -38,12 +38,12 @@ def get_args_parser():
     parser.add_argument("--use_pre", type=bool, default=False)
 
     # lstm setting
-    parser.add_argument("--lstm", type=bool, default=True)
+    parser.add_argument("--lstm", type=bool, default=False)
     parser.add_argument("--merge", type=bool, default=True,
                         help="merge previous frame, set false for all frame visualization")
     parser.add_argument("--lstm_kernel", type=int, default=1)
     parser.add_argument("--lstm_layer", type=int, default=1)
-    parser.add_argument("--noise", type=bool, default=False)
+    parser.add_argument("--noise", type=bool, default=True)
     parser.add_argument("--frame_cut", type=int, default=1)
     parser.add_argument("--noise_type", type=str, default="extra")
 
@@ -62,7 +62,7 @@ def get_args_parser():
     # device settings
     parser.add_argument('--num_workers', default=4, type=int)
     parser.add_argument('--show_sequence', default=False, type=bool)
-    parser.add_argument('--multi_gpu', default=False, type=bool)
+    parser.add_argument('--multi_gpu', default=True, type=bool)
     parser.add_argument("--device", type=str, default='cuda',
                         help="choose gpu device.")
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
