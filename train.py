@@ -36,7 +36,7 @@ def get_args_parser():
                         help="Number of classes to predict (including background).")
     parser.add_argument("--num_epoch", type=int, default=40,
                         help="Number of training steps.")
-    parser.add_argument("--use_pre", type=bool, default=False)
+    parser.add_argument("--use_pre", type=bool, default=True)
 
     # lstm setting
     parser.add_argument("--lstm", type=bool, default=False)

@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from models.DeepLab.deeplab import DeepLab
 from models.FCN import FCN8s, VGGNet
 from models.DANET.danet import get_danet
+from collections import OrderedDict
 from models.ICNet.icnet import ICNet
 from models.PSPNet import PspNet
 
@@ -277,7 +278,11 @@ def load_model(args):
             pre_model = PspNet(args, use_aux=False, use_lstm=False)
             pre_name = "PSPNet"
         checkpoint = torch.load("saved_model/" + pre_name + ".pt")
-        pre_model.load_state_dict(checkpoint, strict=True)
+        new_state_dict = OrderedDict()
+        for k, v in checkpoint.items():
+            name = k[7:] # remove `backbone.`
+            new_state_dict[name] = v
+        pre_model.load_state_dict(new_state_dict, strict=True)
         print("load pre-train param over")
         load_weight(pre_model, init_model)
         # fix_parameter(init_model, ["final1", "final2", "CON_ls"])
