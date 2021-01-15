@@ -39,7 +39,7 @@ def get_args_parser():
     parser.add_argument("--use_pre", type=bool, default=True)
 
     # lstm setting
-    parser.add_argument("--lstm", type=bool, default=False)
+    parser.add_argument("--lstm", type=bool, default=True)
     parser.add_argument("--merge", type=bool, default=True,
                         help="merge previous frame, set false for all frame visualization")
     parser.add_argument("--lstm_kernel", type=int, default=1)
@@ -63,8 +63,8 @@ def get_args_parser():
     # device settings
     parser.add_argument('--num_workers', default=4, type=int)
     parser.add_argument('--show_sequence', default=False, type=bool)
-    parser.add_argument('--multi_gpu', default=True, type=bool)
-    parser.add_argument("--device", type=str, default='cuda',
+    parser.add_argument('--multi_gpu', default=False, type=bool)
+    parser.add_argument("--device", type=str, default='cuda:0',
                         help="choose gpu device.")
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     return parser

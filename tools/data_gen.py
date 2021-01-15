@@ -58,7 +58,7 @@ class DataSetSequence(object):
             wbw = Aug(self.args, use_sequence=True)
         for i in range(sequence_len):
             others = False
-            if self.use_noise and limit > 0 and i != sequence_len-1:
+            if self.use_noise and limit > 0 and i != sequence_len-1 and self.train:
                 if randint(0, 100) > self.args.noise_ratio:
                     limit -= 1
                     if self.args.noise_type == "extra":
