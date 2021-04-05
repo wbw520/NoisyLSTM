@@ -260,7 +260,6 @@ class ICNetLoss(nn.CrossEntropyLoss):
         loss1 = super(ICNetLoss, self).forward(pred_sub4, target_sub4)
         loss2 = super(ICNetLoss, self).forward(pred_sub8, target_sub8)
         loss3 = super(ICNetLoss, self).forward(pred_sub16, target_sub16)
-        #return dict(loss=loss1 + loss2 * self.aux_weight + loss3 * self.aux_weight)
         return loss1 + loss2 * self.aux_weight + loss3 * self.aux_weight
 
 

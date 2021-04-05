@@ -82,6 +82,7 @@ def train(args):
         if torch.cuda.device_count() > 1:
             init_model = nn.DataParallel(init_model, device_ids=device_ids)
     else:
+        init_model = convert_model(init_model)
         init_model.to(device)
 
     n_parameters = sum(p.numel() for p in init_model.parameters() if p.requires_grad)
