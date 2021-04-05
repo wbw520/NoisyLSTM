@@ -1,5 +1,5 @@
 # Noisy-LSTM: Improving Temporal Awareness for Video Semantic Segmentation 
-[PDF](https://arxiv.org/abs/2010.09466)
+[Paper](10.1109/ACCESS.2021.3067928)
 
 ## Model Structure
 ![Structure Figure](figs/overview.png)
@@ -36,12 +36,13 @@ This work was supported by Council for Science, Technology and Innovation (CSTI)
 ## Publication
 If you want to use this work, please consider citing the following paper.
 ```
-@misc{wang2020noisylstm,
-      title={Noisy-LSTM: Improving Temporal Awareness for Video Semantic Segmentation}, 
-      author={Bowen Wang and Liangzhi Li and Yuta Nakashima and Ryo Kawasaki and Hajime Nagahara and Yasushi Yagi},
-      year={2020},
-      eprint={2010.09466},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
-}
+@ARTICLE{9382986,
+  author={B. {Wang} and L. {Li} and Y. {Nakashima} and R. {Kawasaki} and H. {Nagahara} and Y. {Yagi}},
+  journal={IEEE Access}, 
+  title={Noisy-LSTM: Improving Temporal Awareness for Video Semantic Segmentation}, 
+  year={2021},
+  volume={9},
+  number={},
+  pages={46810-46820},
+  doi={10.1109/ACCESS.2021.3067928}}
 ```
