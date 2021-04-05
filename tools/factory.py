@@ -34,7 +34,7 @@ def make_image(model, img_name, device):
 def make_image_lstm(model, device):
     iou = IouCal(args)
     images = []
-    for i in range(4):
+    for i in range(4):  # extract continues four frames with skip 1
         image = cv2.imread(root_image + image_name + "0000" + str(nm + i) + "_leftImg8bit.png", cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, (1024, 512), interpolation=cv2.INTER_LINEAR)
@@ -49,26 +49,26 @@ def make_image_lstm(model, device):
     show_single(args, ColorTransition().recover(labels[0]), "origin")
     inputs = images.to(device, dtype=torch.float32)
     labels = labels.to(device, dtype=torch.int64)
-    predict = for_test(args, model, inputs, labels, iou, lstm=use_lstm, need=True)
+    predict = for_test(args, model, inputs, labels, iou, lstm=args.lstm, need=True)
     print(predict.size())
-    for i in range(4):
-        color_img = ColorTransition().recover(predict[0])
-        # color_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
-        # if i == 3:
-            # show_single(args, color_img, "ls_noise")
-        epoch_iou = iou.iou_demo()
-        print(epoch_iou)
+    color_img = ColorTransition().recover(predict[0])
+    show_single(args, color_img, "ls_noise")
+    epoch_iou = iou.iou_demo()
+    print(epoch_iou)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
-    use_lstm = True
-    model_name = "saved_model/ICNet.pt"
+    args.use_pre = False
+    device = args.device
+    model_name = "../saved_model/PSPNet_lstm_noise.pt"
     init_model = load_model(args)
     init_model = convert_model(init_model)
-    init_model = init_model.cuda()
-    init_model = nn.DataParallel(init_model, device_ids=[0])
+    init_model = init_model.to(device)
+    if args.multi_gpu:
+        init_model = nn.DataParallel(init_model, device_ids=[0])
     init_model.load_state_dict(torch.load(model_name), strict=True)
     init_model.eval()
     print("load param over")
+    make_image_lstm(init_model, device)

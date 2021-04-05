@@ -49,7 +49,7 @@ def print_param(model):
             print(name)
 
 
-def show_single(image, location=None, save=False):
+def show_single(args, image, location=None, save=False):
     # show single image
     image = np.array(image, dtype=np.uint8)
     # image = cv2.resize(image, (args.original_size[1], args.original_size[0]), interpolation=cv2.INTER_NEAREST)
