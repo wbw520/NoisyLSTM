@@ -14,10 +14,11 @@ mean = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
 root_image = "/home/wbw/val/munster/"
 root_label = "/home/wbw/gtFine/val/munster/"
 image_name = "munster_000055_"
-nm = 16
+nm = 16  # start frame of the video
 
 
 def make_image(model, img_name, device):
+    print(image_name)
     image = cv2.imread(img_name, cv2.IMREAD_COLOR)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = cv2.resize(image, (2048, 1024), interpolation=cv2.INTER_LINEAR)
@@ -25,10 +26,11 @@ def make_image(model, img_name, device):
     image -= mean
     images = torch.from_numpy(np.array(np.transpose([image], (0, 3, 1, 2)), dtype="float32")/255)
     inputs = images.to(device, dtype=torch.float32)
+
     predict = for_test(args, model, inputs, None, None, lstm=False, need=True)
     color_img = ColorTransition().recover(torch.squeeze(predict, dim=0))
     # color_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
-    show_single(args, color_img)
+    show_single(args, color_img, "base")
 
 
 def make_image_lstm(model, device):
@@ -71,4 +73,10 @@ if __name__ == '__main__':
     init_model.load_state_dict(torch.load(model_name), strict=True)
     init_model.eval()
     print("load param over")
+
+    # for lstm model inference
     make_image_lstm(init_model, device)
+
+    # # for base model inference only one image as input (root of image is necessary)
+    # img_name = "/home/wbw/val/munster/munster_000055_000019_leftImg8bit.png"
+    # make_image(init_model, img_name, device)
